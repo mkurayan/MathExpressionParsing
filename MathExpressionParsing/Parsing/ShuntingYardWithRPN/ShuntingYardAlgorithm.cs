@@ -8,7 +8,7 @@ namespace MathExpressionParsing.Parsing.ShuntingYardWithRPN
     /// Parse mathematical expressions specified in infix notation and produce a postfix notation expression.
     /// Use shunting-yard algorithm for parsing, the idea is to convert infix notation to postfix and then evaluate result.
     /// </summary>
-    public class InfixNotationParser
+    public class ShuntingYardAlgorithm
     {
         // Dictionary with all operators precedence.
         private static readonly IDictionary<TokenType, int> OperatorsPrecedence = new Dictionary<TokenType, int>

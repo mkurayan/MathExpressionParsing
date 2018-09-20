@@ -3,22 +3,18 @@ using Xunit;
 
 namespace MathExpressionParsingTests.CalculatorIntegrationTests
 {
-    public class SypCalculatorTests
+    public abstract class BaseCalculatorTests
     {
-        private readonly IMathCalculator _calculator;
-        
-        public SypCalculatorTests()
-        {
-            _calculator = new SypCalculator(new MathConstantResolver());
-        }
+        protected abstract IMathCalculator Calculator { get; }
         
         [Theory]
         [InlineData("1", 1)]
+        [InlineData("     1      ", 1)]
         [InlineData("11", 11)]
         [InlineData("Pi", 3.14)]
         public void Calculate_SingleNumberAsMathExpression_NumberItself(string mathExpression, double expectedResult)
         {
-            Assert.Equal(expectedResult, _calculator.Calculate(mathExpression));
+            Assert.Equal(expectedResult, Calculator.Calculate(mathExpression));
         }
 
         [Theory]
@@ -31,7 +27,7 @@ namespace MathExpressionParsingTests.CalculatorIntegrationTests
             string mathExpression,
             double expectedResult)
         {
-            Assert.Equal(expectedResult, _calculator.Calculate(mathExpression));
+            Assert.Equal(expectedResult, Calculator.Calculate(mathExpression));
         }
         
         [Theory]
@@ -44,7 +40,7 @@ namespace MathExpressionParsingTests.CalculatorIntegrationTests
             string mathExpression,
             double expectedResult)
         {
-            Assert.Equal(expectedResult, _calculator.Calculate(mathExpression));
+            Assert.Equal(expectedResult, Calculator.Calculate(mathExpression));
         }               
         
         [Theory]
@@ -57,7 +53,21 @@ namespace MathExpressionParsingTests.CalculatorIntegrationTests
             string mathExpression,
             double expectedResult)
         {
-            Assert.Equal(expectedResult, _calculator.Calculate(mathExpression));
-        }        
+            Assert.Equal(expectedResult, Calculator.Calculate(mathExpression));
+        }
+        
+        [Theory]
+        [InlineData("-1", -1)]
+        [InlineData("+--++-+1", -1)]
+        [InlineData("-3-2", -5)]
+        [InlineData("-3--2", -1)]
+        [InlineData("-Pi + Pi", 0)]
+        [InlineData("1 + + - - + 1", 2)]
+        public void Calculate_MathExpressionWithNegativeNumbers_CorrectCalculationResult(
+            string mathExpression,
+            double expectedResult)
+        {
+            Assert.Equal(expectedResult, Calculator.Calculate(mathExpression));
+        }
     }
 }
