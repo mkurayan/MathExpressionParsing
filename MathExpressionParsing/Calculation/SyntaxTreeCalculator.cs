@@ -20,6 +20,12 @@ namespace MathExpressionParsing.Calculation
             // Split expression to tokens. 
             var tokens = _tokenizer.Tokenize(expression);
 
+            if (tokens.Length == 0)
+            {
+                // Expression empty, nothing to calculate.
+                return 0;
+            }
+
             var parser = new TreeParser(tokens);
 
             return parser.ParseExpression().Evaluate(_variableResolver);

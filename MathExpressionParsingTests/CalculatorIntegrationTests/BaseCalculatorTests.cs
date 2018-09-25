@@ -1,3 +1,4 @@
+using MathExpressionParsing;
 using MathExpressionParsing.Calculation;
 using Xunit;
 
@@ -6,7 +7,13 @@ namespace MathExpressionParsingTests.CalculatorIntegrationTests
     public abstract class BaseCalculatorTests
     {
         protected abstract IMathCalculator Calculator { get; }
-        
+
+        [Fact]
+        public void Calculate_EmptyExpression_Zero()
+        {
+            Assert.Equal(0, Calculator.Calculate(string.Empty));
+        }
+
         [Theory]
         [InlineData("1", 1)]
         [InlineData("     1      ", 1)]
@@ -44,7 +51,7 @@ namespace MathExpressionParsingTests.CalculatorIntegrationTests
         }               
         
         [Theory]
-        [InlineData("1 + 1 + 1", 3)]
+        [InlineData("(1)", 1)]
         [InlineData("(2 - 8) / 2", -3)]
         [InlineData("(1+1) * (3-1)", 4)]
         [InlineData("((1) + (2))/(6/(1+1))", 1)]
@@ -68,6 +75,42 @@ namespace MathExpressionParsingTests.CalculatorIntegrationTests
             double expectedResult)
         {
             Assert.Equal(expectedResult, Calculator.Calculate(mathExpression));
+        }
+
+        [Theory]
+        [InlineData("1 +")]
+        [InlineData("1 + 2 *")]
+        [InlineData("/ 2")]
+        public void Calculate_MissiedOperand_ThrowSyntaxException(string invalidMathExpression)
+        {
+            Assert.Throws<SyntaxException>(() => Calculator.Calculate(invalidMathExpression));
+        }
+
+        [Theory]
+        [InlineData("1 1")]
+        [InlineData("(1) (2)")]
+        public void Calculate_MissiedOperator_ThrowSyntaxException(string invalidMathExpression)
+        {
+            Assert.Throws<SyntaxException>(() => Calculator.Calculate(invalidMathExpression));
+        }
+
+        [Theory]
+        [InlineData("(1 + 1")]
+        [InlineData("1 + 1)")]
+        [InlineData("(1 + 1))")]
+        [InlineData("((1 + 1) (pi)")]
+        public void Calculate_MissiedParenthesis_ThrowSyntaxException(string invalidMathExpression)
+        {
+            Assert.Throws<SyntaxException>(() => Calculator.Calculate(invalidMathExpression));
+        }
+
+        [Theory]
+        [InlineData("1  2")]
+        [InlineData("(1 + 1) /")]
+        [InlineData("(1 + ) 2")]
+        public void Calculate_InvalidTokensSequence_ThrowSyntaxException(string invalidMathExpression)
+        {
+            Assert.Throws<SyntaxException>(() => Calculator.Calculate(invalidMathExpression));
         }
     }
 }

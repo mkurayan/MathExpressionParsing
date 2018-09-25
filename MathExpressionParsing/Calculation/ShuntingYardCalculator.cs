@@ -26,6 +26,12 @@ namespace MathExpressionParsing.Calculation
             // Split expression to tokens. 
             var tokens = _tokenizer.Tokenize(expression);
 
+            if (tokens.Length == 0)
+            {
+                // Expression empty, nothing to calculate.
+                return 0;
+            }
+
             // Use shunting-yard algorithm for parsing. 
             var parsedTokens = _shuntingYardAlgorithm.Parse(tokens);
 

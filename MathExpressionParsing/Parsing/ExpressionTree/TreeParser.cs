@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using MathExpressionParsing.Parsing.ExpressionTree.SyntaxTree;
 using MathExpressionParsing.Tokenization;
 
@@ -7,31 +6,21 @@ namespace MathExpressionParsing.Parsing.ExpressionTree
 {
     public class TreeParser
     {
-        private readonly IEnumerator<Token> _enumerator;
+        private readonly TokensSequence _tokensSequence;
 
-        private Token CurrentToken => _enumerator.Current;
-
-        private void MoveNext()
+        public TreeParser(Token[] tokens)
         {
-            _enumerator.MoveNext();
+            _tokensSequence = new TokensSequence(tokens);
         }
-
-        public TreeParser(IEnumerable<Token> tokens)
-        {
-            _enumerator = tokens.GetEnumerator();
-        } 
         
         public INode ParseExpression()
-        {
-            // Move parser to first token.
-            MoveNext();
-            
+        {      
             // Start expression parsing.
             var expr = ParseAddSubtract();
 
             // Check that whole expression parsed.
-            if (_enumerator.MoveNext())
-                throw new SyntaxException($"Unexpected token: {_enumerator.Current.Value}");
+            if (_tokensSequence.Current.Type != TokenType.EndOfExpression)
+                throw new SyntaxException($"Unexpected token: {_tokensSequence.Current.Value}");
 
             return expr;
         }
@@ -42,10 +31,10 @@ namespace MathExpressionParsing.Parsing.ExpressionTree
             // Parse the left hand side
             var lhs = ParseMultiplyDivide();
 
-            while (CurrentToken.Type == TokenType.Add || CurrentToken.Type == TokenType.Subtract)
+            while (_tokensSequence.Current.Type == TokenType.Add || _tokensSequence.Current.Type == TokenType.Subtract)
             {
                 Func<double, double, double> op;
-                if (CurrentToken.Type == TokenType.Add)
+                if (_tokensSequence.Current.Type == TokenType.Add)
                 {
                     op = (a, b) => a + b;
                 }
@@ -53,9 +42,9 @@ namespace MathExpressionParsing.Parsing.ExpressionTree
                 {
                     op = (a, b) => a - b;
                 }
-          
+
                 // Skip the operator
-                MoveNext();
+                _tokensSequence.MoveNext();
                 
                 // Parse the right hand side of the expression
                 var rhs = ParseMultiplyDivide();
@@ -72,10 +61,10 @@ namespace MathExpressionParsing.Parsing.ExpressionTree
             // Parse the left hand side
             var lhs = ParseUnary();
 
-            while (CurrentToken.Type == TokenType.Multiply || CurrentToken.Type == TokenType.Divide)
+            while (_tokensSequence.Current.Type == TokenType.Multiply || _tokensSequence.Current.Type == TokenType.Divide)
             {
                 Func<double, double, double> op;
-                if (CurrentToken.Type == TokenType.Multiply)
+                if (_tokensSequence.Current.Type == TokenType.Multiply)
                 {
                     op = (a, b) => a * b;
                 }
@@ -83,9 +72,9 @@ namespace MathExpressionParsing.Parsing.ExpressionTree
                 {
                     op = (a, b) => a / b;
                 }
-         
+
                 // Skip the operator
-                MoveNext();
+                _tokensSequence.MoveNext();
                 
                 // Parse the right hand side of the expression
                 var rhs = ParseUnary();
@@ -102,15 +91,15 @@ namespace MathExpressionParsing.Parsing.ExpressionTree
         {
             var negativeCount = 0;
             
-            while (CurrentToken.Type == TokenType.Add || CurrentToken.Type == TokenType.Subtract)
+            while (_tokensSequence.Current.Type == TokenType.Add || _tokensSequence.Current.Type == TokenType.Subtract)
             {
-                if (CurrentToken.Type == TokenType.Subtract)
+                if (_tokensSequence.Current.Type == TokenType.Subtract)
                 {
                     negativeCount++;
                 }
 
                 // Skip
-                MoveNext();
+                _tokensSequence.MoveNext();
             }
             
             var node = ParseLeaf();
@@ -128,41 +117,72 @@ namespace MathExpressionParsing.Parsing.ExpressionTree
         {
             INode node;
             
-            switch (CurrentToken.Type)
+            switch (_tokensSequence.Current.Type)
             {
                 case TokenType.Number:
-                    node = new NumberNode(double.Parse(CurrentToken.Value));
+                    node = new NumberNode(double.Parse(_tokensSequence.Current.Value));
 
-                    MoveNext();
+                    _tokensSequence.MoveNext();
                     
                     break;
                 case TokenType.Variable:
-                    node = new VariableNode(CurrentToken.Value);
+                    node = new VariableNode(_tokensSequence.Current.Value);
 
-                    MoveNext();
+                    _tokensSequence.MoveNext();
                         
                     break;
                 case TokenType.OpenParenthesis:
                     // Skip '('
-                    MoveNext();
+                    _tokensSequence.MoveNext();
 
                     // Parse expression inside the parenthesis.
                     node = ParseAddSubtract();
 
                     // Check for ')'
-                    if (CurrentToken.Type != TokenType.CloseParenthesis)
+                    if (_tokensSequence.Current.Type != TokenType.CloseParenthesis)
                         throw new SyntaxException("Missing close parenthesis");
-    
+
                     // Skip ')'
-                    MoveNext();
+                    _tokensSequence.MoveNext();
                     
                     break;
                 default:
-                    throw new SyntaxException($"Unexpected token: {CurrentToken.Value}");
+                    throw new SyntaxException($"Unexpected token: {_tokensSequence.Current.Value}");
             }
 
             return node;
         }
 
+        private class TokensSequence
+        {
+            private readonly Token[] _tokens;
+            private int _index;
+
+            private readonly Token _endOfExpression = new Token(TokenType.EndOfExpression, string.Empty);
+
+            public Token Current { get; private set; }
+
+            public TokensSequence(Token[] tokens)
+            {
+                _tokens = tokens;
+                _index = -1;
+
+                MoveNext();
+            }
+
+            public void MoveNext()
+            {
+                if (_index < _tokens.Length - 1)
+                {
+                    _index++;
+
+                    Current = _tokens[_index];
+                }
+                else
+                {
+                    Current = _endOfExpression;    
+                }
+            }
+        }
     }
 }
