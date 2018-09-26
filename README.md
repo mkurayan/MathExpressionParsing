@@ -1,6 +1,6 @@
 # Math Expression Parsing
 
-This repository compare 2 calculators for calculating math expression.
+This repository compare 2 math expression calculators.
 First one use Shunting-yard algorithm in order to convert Infix notation into postfix notation and evaluate result.
 Second one turn input text into parse tree. 
 
